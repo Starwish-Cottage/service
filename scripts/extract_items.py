@@ -22,6 +22,9 @@ prefix = None
 
 def clear_dir(path):
     for filename in os.listdir(path):
+        # preserve the folder
+        if filename == ".gitkeep":
+            continue
         file_path = os.path.join(path, filename)
         try:
             if os.path.isfile(file_path) or os.path.islink(file_path):
