@@ -1,38 +1,14 @@
 package main
 
 import (
-	"context"
 	"log"
-	"os"
 
-	"cloud.google.com/go/firestore"
-	firebase "firebase.google.com/go/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"google.golang.org/api/option"
 
+	"github.com/Starwish-Cottage/service/core"
 	"github.com/Starwish-Cottage/service/routes"
 )
-
-func initFirestore() (*firestore.Client, error) {
-	ctx := context.Background()
-
-	credsPath := os.Getenv("GOOGLE_FIREBASE_CREDENTIALS")
-	projId := os.Getenv("PROJECT_ID")
-	config := &firebase.Config{ProjectID: projId}
-	opt := option.WithCredentialsFile(credsPath)
-
-	app, err := firebase.NewApp(ctx, config, opt)
-	if err != nil {
-		log.Fatalf("error initializing firebase app: %v\n", err)
-		return nil, err
-	}
-	client, err := app.Firestore(ctx)
-	if err != nil {
-		log.Fatalf("error initializing Firestore client: %v\n", err)
-	}
-	return client, nil
-}
 
 func main() {
 
@@ -42,10 +18,11 @@ func main() {
 	}
 
 	router := gin.Default()
-	client, err := initFirestore()
+	client, err := core.InitFirestore()
 	if err != nil {
 		return
 	}
+	core.FirestoreClient = client // Initialize the Firestore client globally
 
 	defer client.Close()
 	routes.SetupRoutes(router)
