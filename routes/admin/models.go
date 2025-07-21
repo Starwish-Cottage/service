@@ -9,3 +9,11 @@ type LoginResponse struct {
 	FullName     string `json:"full_name"`
 	SessionToken string `json:"session_token"`
 }
+
+type VerifySessionRequest struct {
+	SessionToken string `json:"session_token" binding:"required"`
+}
+
+type VerifySessionResponse struct {
+	Valid bool `json:"valid"`
+}

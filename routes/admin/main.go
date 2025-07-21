@@ -10,4 +10,8 @@ func SetupAdminRoutes(router *gin.Engine) {
 	adminGroup.POST("/login", func(c *gin.Context) {
 		LoginHandler(c)
 	})
+
+	adminGroup.POST("/verify-session", func(c *gin.Context) {
+		VerifySessionHandler(c)
+	})
 }
