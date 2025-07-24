@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupAdminRoutes(router *gin.Engine) {
+func SetupAdminRoutes(router *gin.RouterGroup) {
 	adminGroup := router.Group("/admin")
 
 	adminGroup.POST("/login", func(c *gin.Context) {
