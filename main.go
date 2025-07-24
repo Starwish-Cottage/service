@@ -7,7 +7,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/Starwish-Cottage/service/core"
-	"github.com/Starwish-Cottage/service/routes"
+	"github.com/Starwish-Cottage/service/v1/routes"
 )
 
 func main() {
