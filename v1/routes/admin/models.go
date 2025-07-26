@@ -6,6 +6,7 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
+	Success      bool   `json:"success" binding:"required"`
 	FullName     string `json:"full_name" binding:"required"`
 	SessionToken string `json:"session_token" binding:"required"`
 	Message      string `json:"message" biding:"required"`

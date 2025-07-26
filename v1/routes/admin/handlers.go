@@ -30,6 +30,7 @@ import (
 //	{
 //	   "full_name": "Admin User",
 //	   "session_token": "token_string"
+//		 "message": "Login successful / failed reason"
 //	}
 //
 // Possible HTTP status codes:
@@ -40,7 +41,7 @@ import (
 func LoginHandler(c *gin.Context) {
 	var request LoginRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, LoginResponse{"", "", err.Error()})
+		c.JSON(http.StatusUnprocessableEntity, LoginResponse{false, "", "", err.Error()})
 		return
 	}
 
@@ -48,19 +49,19 @@ func LoginHandler(c *gin.Context) {
 	client := core.FirestoreClient
 	doc, err := client.Collection("admin_users").Doc(request.Username).Get(c)
 	if err != nil || !doc.Exists() || doc.Data()["password"].(string) != request.Password {
-		c.JSON(http.StatusUnauthorized, LoginResponse{"", "", "Incorrect username or password"})
+		c.JSON(http.StatusUnauthorized, LoginResponse{false, "", "", "Incorrect username or password"})
 		return
 	}
 
 	sessionToken, err := generateSessionToken(request.Username, getValidHours())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, LoginResponse{"", "", "Failed to generate session token"})
+		c.JSON(http.StatusInternalServerError, LoginResponse{false, "", "", "Failed to generate session token"})
 		return
 	}
 
 	fullName, _ := doc.Data()["full_name"].(string)
 
-	c.JSON(http.StatusOK, LoginResponse{fullName, sessionToken, "Login successful"})
+	c.JSON(http.StatusOK, LoginResponse{true, fullName, sessionToken, "Login successful"})
 }
 
 // VerifySessionHandler handles the verification of a user's session token.
@@ -76,6 +77,11 @@ func LoginHandler(c *gin.Context) {
 //	}
 //
 // Responses:
+//
+//	{
+//	   "valid": false
+//	   "message": "session token expired"
+//	}
 //
 //	200 OK    - Session validated successfully
 //	400 Bad Request - Missing or malformed session token
