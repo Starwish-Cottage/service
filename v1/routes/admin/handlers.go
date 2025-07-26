@@ -28,11 +28,8 @@ import (
 // Response JSON (on success):
 //
 //	{
-//	  "message": "Login successful",
-//	  "data": {
-//	    "full_name": "Admin User",
-//	    "session_token": "token_string"
-//	  }
+//	   "full_name": "Admin User",
+//	   "session_token": "token_string"
 //	}
 //
 // Possible HTTP status codes:
@@ -63,12 +60,7 @@ func LoginHandler(c *gin.Context) {
 
 	fullName, _ := doc.Data()["full_name"].(string)
 
-	resonse := LoginResponse{
-		FullName:     fullName,
-		SessionToken: sessionToken,
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful", "data": resonse})
+	c.JSON(http.StatusOK, gin.H{"full_name": fullName, "session_token": sessionToken})
 }
 
 // VerifySessionHandler handles the verification of a user's session token.
