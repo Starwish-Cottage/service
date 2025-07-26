@@ -40,7 +40,7 @@ import (
 func LoginHandler(c *gin.Context) {
 	var request LoginRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnprocessableEntity, LoginResponse{"", "", err.Error()})
 		return
 	}
 
@@ -48,19 +48,19 @@ func LoginHandler(c *gin.Context) {
 	client := core.FirestoreClient
 	doc, err := client.Collection("admin_users").Doc(request.Username).Get(c)
 	if err != nil || !doc.Exists() || doc.Data()["password"].(string) != request.Password {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Incorrect username or password"})
+		c.JSON(http.StatusUnauthorized, LoginResponse{"", "", "Incorrect username or password"})
 		return
 	}
 
 	sessionToken, err := generateSessionToken(request.Username, getValidHours())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate session token"})
+		c.JSON(http.StatusInternalServerError, LoginResponse{"", "", "Failed to generate session token"})
 		return
 	}
 
 	fullName, _ := doc.Data()["full_name"].(string)
 
-	c.JSON(http.StatusOK, gin.H{"full_name": fullName, "session_token": sessionToken})
+	c.JSON(http.StatusOK, LoginResponse{fullName, sessionToken, "Login successful"})
 }
 
 // VerifySessionHandler handles the verification of a user's session token.
@@ -83,15 +83,11 @@ func LoginHandler(c *gin.Context) {
 func VerifySessionHandler(c *gin.Context) {
 	var request VerifySessionRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
 
 	tokenStr := request.SessionToken
-	if tokenStr == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Session token is required"})
-		return
-	}
 
 	var JWT_SECRET = []byte(os.Getenv("JWT_SECRET"))
 
@@ -103,25 +99,26 @@ func VerifySessionHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session token"})
+		c.JSON(http.StatusUnauthorized, VerifySessionResponse{false, err.Error()})
 		return
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		exp, ok := claims["exp"].(float64)
 		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session token"})
+			c.JSON(http.StatusUnauthorized, VerifySessionResponse{false, "Invalid session token"})
+			return
 		}
 
 		// Check if the session token is still valid
 		if time.Now().Unix() > int64(exp) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Session token has expired"})
+			c.JSON(http.StatusUnauthorized, VerifySessionResponse{false, "Session token expired, please sign in again"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Session validated successfully"})
+		c.JSON(http.StatusOK, VerifySessionResponse{true, "Session verification successful"})
 	} else {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session token"})
+		c.JSON(http.StatusUnauthorized, VerifySessionResponse{false, "Invalid session token"})
 	}
 }
 

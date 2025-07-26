@@ -6,8 +6,9 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	FullName     string `json:"full_name"`
-	SessionToken string `json:"session_token"`
+	FullName     string `json:"full_name" binding:"required"`
+	SessionToken string `json:"session_token" binding:"required"`
+	Message      string `json:"message" biding:"required"`
 }
 
 type VerifySessionRequest struct {
@@ -15,5 +16,6 @@ type VerifySessionRequest struct {
 }
 
 type VerifySessionResponse struct {
-	Valid bool `json:"valid"`
+	Valid   bool   `json:"valid" binding:"required"`
+	Message string `json:"message" binding:"required"`
 }
