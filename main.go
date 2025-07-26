@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
@@ -17,7 +18,6 @@ func main() {
 		log.Fatalln("Error loading .env file")
 	}
 
-	router := gin.Default()
 	client, err := core.InitFirestore()
 	if err != nil {
 		return
@@ -25,6 +25,9 @@ func main() {
 	core.FirestoreClient = client // Initialize the Firestore client globally
 
 	defer client.Close()
+
+	router := gin.Default()
+	router.Use(cors.Default())
 	routes.SetupRoutes(router)
-	router.Run(":8080")
+	router.Run("0.0.0.0:8080")
 }
