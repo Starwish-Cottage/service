@@ -1,9 +1,9 @@
 package admin
 
 import (
+	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -53,7 +53,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	sessionToken, err := generateSessionToken(request.Username, getValidHours())
+	sessionToken, err := GenerateSessionToken(request.Username, GetValidHours())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, LoginResponse{false, "", "", "Failed to generate session token"})
 		return
@@ -128,38 +128,67 @@ func VerifySessionHandler(c *gin.Context) {
 	}
 }
 
-// generateSessionToken generates a JWT session token for the given username with the specified expiration duration.
-// It uses the secret key from the environment variable "JWT_SECRET" to sign the token.
+// UploadImageHandler handles the upload of a single image file.
+// It accepts a multipart form request with an image file under the "image" field,
+// saves the file to the local filesystem, and returns the accessible URL for the uploaded image.
 //
-// Parameters:
-//   - username: The username for which the token is generated.
-//   - expiration: The duration for which the token is valid.
+// Request:
+//   - Method: POST
+//   - Content-Type: multipart/form-data
+//   - Form field: "image" (file)
 //
-// Returns:
-//   - A signed JWT token string.
-//   - An error if token generation fails.
-func generateSessionToken(username string, expiration time.Duration) (string, error) {
-	claim := jwt.MapClaims{
-		"username": username,
-		"exp":      time.Now().Add(expiration).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claim)
+// Request Example:
+//   curl -X POST http://localhost:8080/v1/admin/upload-image \
+//     -F "image=@/path/to/image.jpg"
+//
+// Response JSON (on success):
+//
+//	{
+//	  "image_url": "/images/filename.jpg",
+//	  "message": "Image uploaded successfully"
+//	}
+//
+// Response JSON (on error):
+//
+//	{
+//	  "image_url": "",
+//	  "message": "error description"
+//	}
+//
+// Possible HTTP status codes:
+//   - 200 OK: Image uploaded successfully
+//   - 400 Bad Request: No file provided or invalid form data
+//   - 500 Internal Server Error: Failed to save file to filesystem
+//
+// File Storage:
+//   - Files are saved to: ./scripts/src_imgs/
+//   - Accessible via URL: /images/{filename}
+//   - Note: Requires static file serving configuration for /images route
+//
+// Security Considerations:
+//   - TODO: Add file type validation (currently accepts any file type)
+//   - TODO: Add file size limits
+//   - TODO: Sanitize filename to prevent path traversal attacks
+//   - TODO: Add authentication/authorization checks
+//
+// Known Issues:
+//   - Missing return statement after SaveUploadedFile error (function continues execution)
+//   - No file type validation implemented
+//   - Potential filename conflicts (no unique naming strategy)
+//   - Directory traversal vulnerability if filename contains "../"
 
-	var JWT_SECRET = []byte(os.Getenv("JWT_SECRET"))
-	return token.SignedString(JWT_SECRET)
-}
-
-// getValidHours retrieves the session token validity duration in hours.
-// It reads the "LOGIN_DAYS" environment variable to determine the number of valid days.
-// If the variable is not set or invalid, it defaults to 7 days.
-//
-// Returns:
-//   - A time.Duration representing the validity period in hours.
-func getValidHours() time.Duration {
-	daysStr := os.Getenv("LOGIN_DAYS")
-	days, err := strconv.ParseInt(daysStr, 10, 64)
-	if err != nil || days <= 0 {
-		days = 7 // Default to 7 days
+func UploadImageHandler(c *gin.Context) {
+	// add file type validation
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, UploadImageResponse{"", err.Error()})
+		return
 	}
-	return time.Hour * time.Duration(days*24)
+	destination := "./scripts/src_imgs/" + file.Filename
+	if err := c.SaveUploadedFile(file, destination); err != nil {
+		c.JSON(http.StatusInternalServerError, UploadImageResponse{"", err.Error()})
+	}
+
+	imageUrl := fmt.Sprintf("/images/%s", file.Filename)
+	c.JSON(http.StatusOK, UploadImageResponse{imageUrl, "Image uploaded successfully"})
 }

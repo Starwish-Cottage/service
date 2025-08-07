@@ -20,3 +20,8 @@ type VerifySessionResponse struct {
 	Valid   bool   `json:"valid" binding:"required"`
 	Message string `json:"message" binding:"required"`
 }
+
+type UploadImageResponse struct {
+	ImageUrl string `json:"image_url" binding:"required"`
+	Message  string `json:"message" binding:"required"`
+}

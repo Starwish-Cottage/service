@@ -3,6 +3,7 @@
 
 # Image files
 *.png
+*.jpg
 
 # Binaries for programs and plugins
 *.exe

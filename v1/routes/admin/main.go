@@ -14,4 +14,10 @@ func SetupAdminRoutes(router *gin.RouterGroup) {
 	adminGroup.POST("/verify-session", func(c *gin.Context) {
 		VerifySessionHandler(c)
 	})
+
+	// Serve static files
+	adminGroup.Static("/images", "./scripts/src_imgs")
+	adminGroup.POST("/upload", func(c *gin.Context) {
+		UploadImageHandler(c)
+	})
 }
