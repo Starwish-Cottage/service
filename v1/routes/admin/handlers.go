@@ -179,16 +179,21 @@ func VerifySessionHandler(c *gin.Context) {
 
 func UploadImageHandler(c *gin.Context) {
 	// add file type validation
-	file, err := c.FormFile("image")
+	form, err := c.MultipartForm()
+
 	if err != nil {
-		c.JSON(http.StatusBadRequest, UploadImageResponse{"", err.Error()})
+		c.JSON(http.StatusBadRequest, UploadImageResponse{false, nil, err.Error()})
 		return
 	}
-	destination := "./scripts/src_imgs/" + file.Filename
-	if err := c.SaveUploadedFile(file, destination); err != nil {
-		c.JSON(http.StatusInternalServerError, UploadImageResponse{"", err.Error()})
+	files := form.File["files"]
+	var urls []string
+	for _, file := range files {
+		destination := "./scripts/src_imgs/" + file.Filename
+		if err := c.SaveUploadedFile(file, destination); err != nil {
+			c.JSON(http.StatusInternalServerError, UploadImageResponse{false, nil, err.Error()})
+		}
+		imageUrl := fmt.Sprintf("/images/%s", file.Filename)
+		urls = append(urls, imageUrl)
 	}
-
-	imageUrl := fmt.Sprintf("/images/%s", file.Filename)
-	c.JSON(http.StatusOK, UploadImageResponse{imageUrl, "Image uploaded successfully"})
+	c.JSON(http.StatusOK, UploadImageResponse{true, urls, "Image uploaded successfully"})
 }
