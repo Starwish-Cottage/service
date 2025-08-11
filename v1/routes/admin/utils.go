@@ -18,7 +18,8 @@ import (
 // Returns:
 //   - A signed JWT token string.
 //   - An error if token generation fails.
-func GenerateSessionToken(username string, expiration time.Duration) (string, error) {
+func GenerateSessionToken(username string) (string, error) {
+	expiration := GetValidHours()
 	claim := jwt.MapClaims{
 		"username": username,
 		"exp":      time.Now().Add(expiration).Unix(),

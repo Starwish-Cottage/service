@@ -27,7 +27,13 @@ func main() {
 	defer client.Close()
 
 	router := gin.Default()
-	router.Use(cors.Default())
+	// router.Use(cors.Default())
+	router.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"*"},
+		AllowHeaders:     []string{"*"},
+		AllowCredentials: true,
+	}))
 	routes.SetupRoutes(router)
 	router.Run("0.0.0.0:8080")
 }
